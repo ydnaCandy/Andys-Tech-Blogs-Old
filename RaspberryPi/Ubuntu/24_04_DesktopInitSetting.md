@@ -141,16 +141,82 @@ sudo apt autoremove -y
 
 
 ### sshを鍵認証に変更
+ローカルPC側で鍵を作成
 
-### 自動ログアウト
+```bash
+$ ssh-keygen -t ed25519
+
+# 変更しない場合はEnter
+>>> Enter file in which to save the key:
+
+# パスフレーズを作成する場合は入力
+>>> Enter passphrase (empty for no passphrase): 
+>>> Enter same passphrase again:
+
+# サーバー側に公開鍵をコピー
+$ scp id_ed25519.pub [goku]@[Host IP]:/home/[user_name]/.ssh/
+
+```
+
+Ubuntu側で設定
+
+```bash
+# 公開鍵を登録
+$ cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
+
+# ファイルの権限を変更
+$ chmod 600 ~/.ssh/authorized_keys
+
+# サービス再起動
+$ sudo systemctl restart ssh
+```
 
 ### IP固定
 
-### スリープOFF
+```bash
+$ sudo nano /etc/netplan/99-custom.yaml 
+```
 
+```yaml
+network:
+  version: 2
+    wifis:
+      wlan0:
+        dhcp4: false
+        addresses: [IP_Address/24]
+        routes:
+          - to: default
+            via: [default gateway]
+        nameservers:
+        addresses: [DNS_IP, 8.8.8.8]
+        optional: true
+        access-points:
+          "[ssid_name]":
+            auth:
+              password: "[password]"
+```
 
+### Autologin
 
+```bash
+$ sudo nano /etc/gdm3/custom.conf
+```
 
+```conf
+# Enabling automatic login
+#  AutomaticLoginEnable = true
+#  AutomaticLogin = user1
+
+# Enabling automatic login
+AutomaticLoginEnable = true
+AutomaticLogin = [username]
+```
+
+```bash
+$ sudo reboot now
+```
+
+再起動後、自動ログインされれば成功
 
 ## 参考
 - https://tenteroring.org/sierra/?p=3605

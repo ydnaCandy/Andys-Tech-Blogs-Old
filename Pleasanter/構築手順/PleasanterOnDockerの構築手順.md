@@ -36,43 +36,61 @@
 
     ```yml
     services:
-    db:
+      db:
         container_name: postgres
         image: postgres:15
         ports:
-        - "15432:5432"
+          - "15432:5432"
         environment:
-        - POSTGRES_USER
-        - POSTGRES_PASSWORD
-        - POSTGRES_DB
-        - POSTGRES_HOST_AUTH_METHOD
-        - POSTGRES_INITDB_ARGS
+          - POSTGRES_USER
+          - POSTGRES_PASSWORD
+          - POSTGRES_DB
+          - POSTGRES_HOST_AUTH_METHOD
+          - POSTGRES_INITDB_ARGS
         restart: always
         volumes:
-        - /var/dockervol/psql/data:/var/lib/postgresql/data
+          - /var/dockervol/psql/data:/var/lib/postgresql/data
+        networks:
+          pleasanter_net:
+            ipv4_address: 172.99.0.2
 
-    pleasanter:
+      pleasanter:
         container_name: pleasanter
         image: implem/pleasanter
         depends_on:
-        - db
+          - db
         ports:
-        - "13500:8080"
+          - "13500:8080"
         environment:
-        Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
-        Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
-        Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
         restart: always
+        networks:
+          pleasanter_net:
+            ipv4_address: 172.99.0.3
 
-    codedefiner:
+      codedefiner:
         container_name: codedefiner
         image: implem/pleasanter:codedefiner
         depends_on:
-        - db
+          - db
         environment:
-        Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
-        Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
-        Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
+          Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+        networks:
+          pleasanter_net:
+            ipv4_address: 172.99.0.4
+
+
+    networks:
+      pleasanter_net:
+        driver: bridge
+        ipam:
+          driver: default
+          config:
+            - subnet: 172.99.0.0/24
 
     ```
 

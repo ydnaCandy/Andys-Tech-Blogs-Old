@@ -1,9 +1,16 @@
 # RPiOS Bookworm初期設定手順
 
+## 環境
+- ハードウェア
+    - Raspberry Pi
+- OS
+    - Raspiberry Pi OS Bookworm
 
 ## 基本設定
 
 ### ネットワーク設定(WiFi)
+
+NetworkManagerを使って接続設定
 
 ```bash
 

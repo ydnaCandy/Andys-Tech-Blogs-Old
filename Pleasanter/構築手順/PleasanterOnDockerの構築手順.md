@@ -109,65 +109,93 @@
 6. ブラウザからPleasanterにアクセスして起動していること
 
 
-
-
-
 ## DBとPleasanterを別端末で構築する
 
-まずはpostgresを起動する
+1. まずはpostgresを起動する端末で、`.env`と`compose.yml`を作成する
 
-.envファイルを作成
+    ```conf
+    # .envで保存
+    POSTGRES_USER=postgres
+    POSTGRES_PASSWORD=postgres
+    POSTGRES_DB=postgres
+    POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+    POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256"
 
-```conf
-# .envで保存
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=postgres
-POSTGRES_HOST_AUTH_METHOD=scram-sha-256
-POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256"
+    # Server部分にサーバー側のIPを指定
+    Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString='Server=192.168.3.100:15432;Database=postgres;UID=postgres;PWD=postgres'
+    Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_Owner;PWD=postgres'
+    Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_User;PWD=postgres'
+    ```
 
-# Server部分にサーバー側のIPを指定
-Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString='Server=192.168.3.100:15432;Database=postgres;UID=postgres;PWD=postgres'
-Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_Owner;PWD=postgres'
-Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_User;PWD=postgres'
-```
+    ```yml
+    # postgresのみ起動
+    services:
+    db:
+        container_name: postgres
+        image: postgres:15
+        ports:
+        - "15432:5432"
+        environment:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+        - POSTGRES_DB
+        - POSTGRES_HOST_AUTH_METHOD
+        - POSTGRES_INITDB_ARGS
+    ```
+
+2. postgresを起動する
+
+    ```bash
+    $ docker compose up -d
+    ```
+
+3. pleasanter側の端末で、`.env`と`compose.yml`を作成する
+
+    ```conf
+    # .envで保存
+    POSTGRES_USER=postgres
+    POSTGRES_PASSWORD=postgres
+    POSTGRES_DB=postgres
+    POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+    POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256"
+
+    # Server部分にサーバー側のIPを指定
+    Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString='Server=192.168.3.100:15432;Database=postgres;UID=postgres;PWD=postgres'
+    Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_Owner;PWD=postgres'
+    Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString='Server=192.168.3.100:15432;Database=#ServiceName#;UID=#ServiceName#_User;PWD=postgres'
+    ```
+
+    ```yml
+    # pleasanter側
+    services:
+    pleasanter:
+        container_name: pleasanter
+        image: implem/pleasanter
+        ports:
+        - "13500:8080"
+        environment:
+        Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
+        Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
+        Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+
+    codedefiner:
+        container_name: codedefiner
+        image: implem/pleasanter:codedefiner
+        environment:
+        Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
+        Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
+        Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+    ```
 
 
-```yml
-# postgresのみ起動
-services:
-  db:
-    container_name: postgres
-    image: postgres:15
-    ports:
-      - "15432:5432"
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
-      - POSTGRES_HOST_AUTH_METHOD
-      - POSTGRES_INITDB_ARGS
-```
+4. codedefinerを実行する
 
-```yml
-# pleasanter側
-services:
-  pleasanter:
-    container_name: pleasanter
-    image: implem/pleasanter
-    ports:
-      - "13500:8080"
-    environment:
-      Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
-      Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
-      Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+    ```bash
+    $ docker compose run codedefiner _rds 
+    ```
 
-  codedefiner:
-    container_name: codedefiner
-    image: implem/pleasanter:codedefiner
-    environment:
-      Implem.Pleasanter_Rds_PostgreSQL_SaConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_SaConnectionString}
-      Implem.Pleasanter_Rds_PostgreSQL_OwnerConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_OwnerConnectionString}
-      Implem.Pleasanter_Rds_PostgreSQL_UserConnectionString: ${Implem_Pleasanter_Rds_PostgreSQL_UserConnectionString}
+5. pleasanterを起動する
 
-```
+    ```bash
+    $ docker compose up -d pleasanter
+    ```
